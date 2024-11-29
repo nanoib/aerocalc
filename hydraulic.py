@@ -29,12 +29,8 @@ def friction_factor(reynolds_number, hydraulic_diameter, roughness):
     Возвращает:
     float - коэффициент гидравлического сопротивления трения
     """
-    result = (
-        0.11 * (roughness / hydraulic_diameter + 68 / reynolds_number) ** 0.25
-    )
-    print(
-        f"Коэффициент гидравлического сопротивления трения: {result:.4f}"
-    )
+    result = 0.11 * (roughness / hydraulic_diameter + 68 / reynolds_number) ** 0.25
+    print(f"Коэффициент гидравлического сопротивления трения: {result:.4f}")
     return result
 
 
@@ -69,18 +65,17 @@ def velocity(flow, height=None, width=None, diameter=None):
     Возвращает:
     скорость, м/c
     """
-    if (height and width) and diameter:
-        raise ValueError("Необходимо указать одно из двух: пару height/width или diameter.")
-    elif height and width:
+    if height and width:
         result = flow / 3600 / height / width
     elif diameter:
         result = flow / 3600 / (math.pi * diameter**2 / 4)
     else:
-        raise ValueError("Необходимо указать одно из двух: пару height/width или diameter.")
+        raise ValueError("Не найдено нужных параметров.")
 
     print(f"Скорость в воздуховоде: {result:.2f} м/c")
 
     return result
+
 
 def hydraulic_diameter(height=None, width=None, diameter=None):
     """
@@ -95,15 +90,14 @@ def hydraulic_diameter(height=None, width=None, diameter=None):
     Возвращает:
     гидравлический диаметр, м
     """
-    if (height and width) and diameter:
-        raise ValueError("Необходимо указать одно из двух: пару height/width или diameter.")
-    elif height and width:
+
+    if height and width:
         result = 2 * height * width / (height + width)
     elif diameter:
         result = diameter
     else:
-        raise ValueError("Необходимо указать одно из двух: пару height/width или diameter.")
-    
+        raise ValueError("Не найдено нужных параметров.")
+
     print(f"Гидравлический диаметр: {result:.3f} м")
 
     return result

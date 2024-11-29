@@ -1,4 +1,4 @@
-from hydraulic import reynolds_number, friction_factor, dynamic_pressure, velocity
+from hydraulic import reynolds_number, friction_factor, dynamic_pressure, velocity, hydraulic_diameter
 from thermophysical import kinematic_viscosity, density
 
 # Функция для расчета удельных потерь давления на трение
@@ -14,66 +14,68 @@ def specific_pressure_loss(friction_factor, diameter, dynamic_pressure):
     Возвращает:
     удельные потери давления на трение, Па/м
     """
-    return friction_factor / diameter * dynamic_pressure
+    result = friction_factor / diameter * dynamic_pressure
+    print(f"\nУдельные потери давления: {result:.2f} Па")
+    return result
 
 # Функция для расчета потерь давления на трение
-def pressure_loss(specific_pressure_loss, length, correction_factor):
+def pressure_loss(specific_pressure_loss, length):
     """
     Рассчитывает потери давления на трение.
     
     Аргументы:
     specific_pressure_loss - удельные потери давления на трение, Па/м
     length - длина участка воздуховода, м
-    correction_factor - поправочный коэффициент
     
     Возвращает:
     потери давления на трение, Па
     """
-    return specific_pressure_loss * length * correction_factor
+    result = specific_pressure_loss * length
+    print(f"\nПотери давления: {result:.2f} Па")
+    return result
 
 # Главная функция для расчета потерь в воздуховоде
-def duct(flow, height=None, width=None, diameter=None):
+def duct(flow, length, temperature, height=None, width=None, diameter=None):
     """
-    Рассчитывает потери давления в воздуховоде.
+    Рассчитывает потери давления в воздуховоде. 
+    Нужно задать одно из двух: пару height/width или diameter.
     
     Аргументы:
+    flow - расход воздуха, м^3/ч
+    lenght - длина участка воздуховода, м
     height - высота воздуховода, м
     width - ширина воздуховода, м
     diameter - диаметр воздуховода, м
-    flow - расход воздуха, м^3/ч
+    temperature - Температура воздуха, °C
     
     Возвращает:
     Потери давления на трение, Па
     """
-    temperature = 0  # Температура воздуха, °C
+    print('================================')
+    print(f'Расчет воздуховода с параметрами\nflow: {flow} м^3/ч, length: {length} м, height: {height} м, width: {width} м, diameter: {diameter} м, temperature: {temperature} °C\n')
     roughness = 0.001  # Абсолютная эквивалентная шероховатость поверхности воздуховода, мм
-    length = 1.37  # Длина участка воздуховода, м
-    correction_factor = 1  # Поправочный коэффициент
     
     # Рассчитываем гидравлический диаметр
-    if height and width:
-        hydraulic_diameter = 2 * height * width / (height + width)
-    else:
-        hydraulic_diameter = diameter
-    print(f"Гидравлический диаметр: {hydraulic_diameter:.3f} м")
+    d_hyd = hydraulic_diameter(height, width, diameter)
 
     # Рассчитываем критерий Рейнольдса
-    reynolds_number_value = reynolds_number(velocity(flow, hydraulic_diameter), hydraulic_diameter, kinematic_viscosity(temperature))
+    re = reynolds_number(velocity(flow, height, width, diameter), d_hyd, kinematic_viscosity(temperature))
 
     # Рассчитываем коэффициент гидравлического сопротивления трения
-    friction_factor_value = friction_factor(reynolds_number_value, hydraulic_diameter, roughness)
+    lmbd = friction_factor(re, d_hyd, roughness)
 
     # Рассчитываем динамическое давление
-    dynamic_pressure_value = dynamic_pressure(density(temperature), velocity(flow, hydraulic_diameter))
+    p_dyn = dynamic_pressure(density(temperature), velocity(flow, height, width, diameter))
     
     # Рассчитываем удельные потери давления на трение
-    specific_pressure_loss_value = specific_pressure_loss(friction_factor_value, hydraulic_diameter, dynamic_pressure_value)
+    p_vol = specific_pressure_loss(lmbd, d_hyd, p_dyn)
     
     # Рассчитываем полные потери давления на трение
-    pressure_loss_value = pressure_loss(specific_pressure_loss_value, length, correction_factor)
+    result = pressure_loss(p_vol, length)
+    print('================================')
     
-    return pressure_loss_value
+    return result
 
 # Расчет
-pressure_loss = duct(flow=600, diameter=0.16)
-print(f"\nПотери давления: {pressure_loss:.2f} Па\n")
+duct(flow=600, length=1.37, temperature=0, diameter=0.16)
+duct(flow=1000, length=1, temperature=-25, height=0.3, width=0.3)

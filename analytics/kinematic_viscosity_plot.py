@@ -5,7 +5,7 @@ import seaborn as sns
 import numpy as np
 
 # Define temperature range and step
-temperatures = np.arange(-40, 501, 20)
+temperatures = np.arange(-60, 60, 5)
 
 # Calculate viscosity using kinematic_viscosity_idelchik and kinematic_viscosity_thermo
 kinematic_viscosity_thermo = [kinematic_viscosity_thermo(t) for t in temperatures]

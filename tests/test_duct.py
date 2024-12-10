@@ -35,6 +35,15 @@ class TestDuct(unittest.TestCase):
         )
         self.assertAlmostEqual(result, 12.06, places=1)
 
+    def test_pressure_loss_square(self):
+        """
+        Проверка примера из AeroCalc.py
+        """
+        result = duct(
+            flow=1000, length=1.0, temperature=-25, height=0.3, width=0.3, roughness=0.001
+        )
+        self.assertAlmostEqual(result, 0.63, places=2)
+
     def test_assert_errors(self):
         with self.assertRaises(AssertionError):
             """Проверка выдачи assert если не указана ширина воздуховода"""

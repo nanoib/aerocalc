@@ -71,7 +71,7 @@ def kinematic_viscosity_idelchik(t):
     """
 
     # Настройка, насколько далеко можно экстраполировать от данных
-    extrapolation_max_factor = 1.0
+    extrapolation_max_factor = 2.0
 
     # Чтение данных из CSV
     with open("./data/kinematic_viscosity.csv", newline="") as csvfile:

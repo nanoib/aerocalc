@@ -1,12 +1,12 @@
 import math
-from hydraulic import (
+from physics.hydraulic import (
     reynolds_number,
     friction_factor,
     dynamic_pressure,
     velocity,
     hydraulic_diameter,
 )
-from thermophysical import kinematic_viscosity, density
+from physics.thermophysical import kinematic_viscosity, density
 
 
 def bend(

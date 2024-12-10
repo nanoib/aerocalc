@@ -20,14 +20,14 @@ def reynolds_number(velocity, diameter, kinematic_viscosity):
 
 def friction_factor(reynolds_number, hydraulic_diameter, roughness):
     """
-    Рассчитывает коэффициент гидравлического сопротивления трения.
+    Рассчитывает коэффициент сопротивления трения.
 
     Аргументы:
     reynolds_number - критерий Рейнольдса
     roughness - абсолютная эквивалентная шероховатость поверхности воздуховода, мм
 
     Возвращает:
-    float - коэффициент гидравлического сопротивления трения
+    float - безразмерный коэффициент сопротивления трения
     """
     result = 0.11 * (roughness / hydraulic_diameter + 68 / reynolds_number) ** 0.25
     print(f"Коэффициент гидравлического сопротивления трения: {result:.4f}")

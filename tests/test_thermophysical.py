@@ -59,7 +59,7 @@ class TestThermophysical(unittest.TestCase):
         Проверка, что срабатывает предел экстраполяции
         (экстраполяция вниз)
         """
-        t = -61
+        t = -81
         with self.assertRaises(AssertionError):
             kinematic_viscosity_idelchik(t)
 

@@ -53,7 +53,7 @@ def density_mendeleev(t):
     # Calculate density
     result = pressure * M_air / (R_constant * T_kelvin)
 
-    print(f"Плотность воздуха по идеальному газу: {result:.3f}, кг/м^3")
+    print(f"Плотность воздуха по идеальному газу при {t} °C: {result:.3f}, кг/м^3")
     return result
 
 
@@ -71,7 +71,7 @@ def kinematic_viscosity_idelchik(t):
     """
 
     # Настройка, насколько далеко можно экстраполировать от данных
-    extrapolation_max_factor = 2.0
+    extrapolation_max_factor = 3.0
 
     # Чтение данных из CSV
     with open("./data/kinematic_viscosity.csv", newline="") as csvfile:
@@ -119,6 +119,3 @@ def kinematic_viscosity_idelchik(t):
         f"Кинематическая вязкость воздуха по Идельчик при {t}°C: {result * 100000:.3f}*10^-5 m^2/s"
     )
     return result
-
-
-density_mendeleev(-20)

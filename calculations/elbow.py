@@ -14,7 +14,7 @@ from physics.thermophysical import (
 )
 
 
-def bend(
+def elbow(
     flow,
     temperature,
     angle,

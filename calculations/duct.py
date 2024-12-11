@@ -77,12 +77,6 @@ def duct(
         f"Расчет воздуховода с параметрами\nflow: {flow} м^3/ч, length: {length} м, height: {height} м, width: {width} м, diameter: {diameter} м, temperature: {temperature} °C\n"
     )
 
-    # Рассчитываем гидравлический диаметр
-    d_hyd = hydraulic_diameter(height, width, diameter)
-
-    # Рассчитываем скорость воздуха
-    v = velocity(flow, height, width, diameter)
-
     # Получаем термофизические данные
     if thermophysics == "idelchik":
         kinematic_viscosity = kinematic_viscosity_idelchik
@@ -92,6 +86,12 @@ def duct(
         density = density_thermo
     else:
         raise ValueError("Неизвестный вид термофизических данных")
+
+    # Рассчитываем гидравлический диаметр
+    d_hyd = hydraulic_diameter(height, width, diameter)
+
+    # Рассчитываем скорость воздуха
+    v = velocity(flow, height, width, diameter)
 
     # Рассчитываем критерий Рейнольдса
     re = reynolds_number(v, d_hyd, kinematic_viscosity(temperature))

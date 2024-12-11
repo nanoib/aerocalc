@@ -108,12 +108,7 @@ def duct(
     # Рассчитываем полные потери давления на трение
     result = p_dyn * dzeta
 
-    print(f"Полные потери давления: {result:.3f} Па")
+    print(f"Полные dP в воздуховоде: {result:.3f} Па")
     print("================================")
 
     return result
-
-
-# Расчет
-duct(flow=600, length=1.37, temperature=0, diameter=0.16, roughness=0.001)
-duct(flow=1000, length=1, temperature=-25, height=0.3, width=0.3)

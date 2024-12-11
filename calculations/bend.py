@@ -131,5 +131,7 @@ k_re: {k_re:.2f}, A1: {A1:.2f}, B1: {B1:.2f}, C1: {C1:.2f}\nksi: {ksi:.3f}"
     )
 
     result = ksi * p_dyn
-    print(f"Потери давления на трение: {result:.3f} Па")
+    print(f"Полные dP в отводе: {result:.3f} Па")
+    print("================================")
+
     return result

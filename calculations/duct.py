@@ -13,24 +13,6 @@ from physics.thermophysical import (
 )
 
 
-# Функция для расчета удельных потерь давления на трение
-def dzeta_duct(friction_factor, diameter, length):
-    """
-    Рассчитывает коэффициент гидравлического сопротивления воздуховода.
-
-    Аргументы:
-    friction_factor - коэффициент гидравлического сопротивления трения
-    diameter - диаметр воздуховода, м
-    length - длина участка воздуховода, м
-
-    Возвращает:
-    безразмерный коэффициент гидравлического сопротивления воздуховода
-    """
-    result = friction_factor * length / diameter
-    print(f"Коэффициент гидравлического сопротивления: {result:.2f}")
-    return result
-
-
 # Главная функция для расчета потерь в воздуховоде
 def duct(
     flow,
@@ -103,7 +85,8 @@ def duct(
     p_dyn = dynamic_pressure(density(temperature), v)
 
     # Рассчитываем удельные потери давления на трение
-    dzeta = dzeta_duct(lmbd, d_hyd, length)
+    dzeta = lmbd * length / d_hyd
+    print(f"Коэффициент гидравлического сопротивления: {dzeta:.3f}")
 
     # Рассчитываем полные потери давления на трение
     result = p_dyn * dzeta

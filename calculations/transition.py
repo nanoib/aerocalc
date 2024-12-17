@@ -3,7 +3,6 @@ from physics.hydraulic import (
     reynolds_number,
     friction_factor,
     dynamic_pressure,
-    velocity,
     hydraulic_diameter,
 )
 from physics.thermophysical import (

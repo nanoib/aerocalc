@@ -66,7 +66,7 @@ def velocity(flow, height=None, width=None, diameter=None):
     скорость, м/c
     """
     if height and width:
-        result = flow / 3600 / height / width
+        result = flow / 3600 / (height * width)
     elif diameter:
         result = flow / 3600 / (math.pi * diameter**2 / 4)
     else:

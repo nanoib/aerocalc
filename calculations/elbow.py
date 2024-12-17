@@ -23,7 +23,7 @@ def elbow(
     height=None,
     width=None,
     diameter=None,
-    roughness=0.001,
+    roughness=0.0015,
     thermophysics="idelchik",
     calcversion=None,
 ):
@@ -33,6 +33,7 @@ def elbow(
     Нужно задать одно из двух: пару height/width или diameter.
     Направление поворота oriented требуется, чтобы правильно определить отношение r0/b0.
     Для круглого воздуховода oriented можно не задавать (не влияет на расчет).
+    Шероховатость по умолчанию 1.5 мм
 
     Аргументы:
     flow - расход воздуха, м^3/ч
@@ -45,7 +46,7 @@ def elbow(
     diameter - диаметр воздуховода, м
     roughness - абсолютная шероховатость, м
     thermophysics - модель термофизических свойств (idelchik или thermo)
-    calcversion="22" - версия расчета. "22" - версия без kdelta и kre
+    calcversion - версия расчета. "22" - версия без kdelta и kre
 
     Возвращает:
     Потери давления на трение, Па
@@ -117,20 +118,24 @@ def elbow(
     r0b0 = r0 / diameter if diameter else (r0 / width if oriented == "horiz" else r0 / height)
     a0b0 = None if diameter else (height / width if oriented == "horiz" else width / height)
 
-    A1 = 0.9 * math.sin(angle) if angle < 70 else ((0.7 + 0.35 * angle / 90) if angle > 100 else 1)
+    A1 = (
+        0.9 * math.sin(math.radians(angle))
+        if angle < 70
+        else ((0.7 + 0.35 * angle / 90) if angle > 100 else 1)
+    )
     B1 = 0.21 * (r0b0) ** (-2.5 if r0b0 <= 1 else -0.5)
     C1 = 1 if diameter else (0.85 + 0.125 / a0b0) if height / width <= 4 else (1.115 - 0.84 / a0b0)
 
-    ksi_local = A1 * B1 * C1
-    ksi_friction = 0.0175 * angle * lmbd * r0 / d_hyd
-    ksi = k_delta * k_re * ksi_local + ksi_friction
+    dzeta_local = A1 * B1 * C1
+    dzeta_friction = 0.0175 * angle * lmbd * r0 / d_hyd
+    dzeta = k_delta * k_re * dzeta_local + dzeta_friction
 
     print(
         f"Расчетные параметры:\nr0/b0: {r0b0:.2f}, k_delta: {k_delta:.2f}, \
-k_re: {k_re:.2f}, A1: {A1:.2f}, B1: {B1:.2f}, C1: {C1:.2f}\nksi: {ksi:.3f}"
+k_re: {k_re:.3f}, A1: {A1:.3f}, B1: {B1:.3f}, C1: {C1:.3f}\ndzeta: {dzeta:.3f}"
     )
 
-    result = ksi * p_dyn
+    result = dzeta * p_dyn
     print(f"Полные dP в отводе: {result:.3f} Па")
     print("================================")
 

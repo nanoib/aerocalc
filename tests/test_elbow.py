@@ -40,6 +40,22 @@ class Testelbow(unittest.TestCase):
         )
         self.assertAlmostEqual(result, 11.27, places=1)
 
+    def test_elbow_pressure_loss_45(self):
+        """
+        Проверка примера из исходного файла с углом 45.
+        """
+        result = elbow(
+            flow=600,
+            temperature=0,
+            angle=45,
+            r0=0.185,
+            diameter=0.16,
+            roughness=0.001,
+            thermophysics="idelchik",
+            calcversion="22",
+        )
+        self.assertAlmostEqual(result, 6.809, places=1)
+
     def test_elbow_pressure_loss_square(self):
         """
         Проверка примера из AeroCalc.xlsx (квадратный) без учета kdelta, kre

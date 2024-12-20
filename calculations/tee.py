@@ -1,17 +1,89 @@
 import math
 from physics.hydraulic import (
-    reynolds_number,
-    friction_factor,
     velocity,
     dynamic_pressure,
-    hydraulic_diameter,
 )
 from physics.thermophysical import (
-    kinematic_viscosity_idelchik,
-    kinematic_viscosity_thermo,
     density_mendeleev,
     density_thermo,
 )
+
+
+def velocity_best_mixture(flow_o1, v_o1, angle_o1, flow_o2, v_o2, angle_o2, flow_p, v_p, flow_c):
+    """
+    Рассчитывает наивыгоднейшую скорость смешивания .
+    По: Формуле из "Расчеты в nanoCAD BIM Вентиляция"
+    Индекс «c» относится к смесительному патрубку (магистральный патрубок с суммарным расходом).
+    Индекс «o1» относится к ответвлению тройника или к первому из боковых ответвлений крестовины.
+    Индекс «o2» относится ко второму боковому ответвлению крестовины.
+    Индекс «p» («п») относится к проходу (магистральный патрубок с частичным расходом).
+    Если расчет ведется для тройника, то flow_o2, v_o2, angle_o2 нужно задать равными «None».
+    Аргументы обозначаются как в функции tee().
+    """
+    ###########Проверки#############
+    # Проверяем, заданы ли необходимые параметры
+    assert (
+        flow_o1 and v_o1 and angle_o1 and flow_p and v_p and flow_c
+    ), "Не заданы нужные параметры!"
+    ###########Проверки#############
+
+    # Проверяем, заданы ли параметры для крестовины
+    if (flow_o2 is None) and (v_o2 is None) and (angle_o2 is None):
+        # Расчет для тройника
+        result = (
+            flow_o1 / flow_c * v_o1 * (math.cos(math.radians(angle_o1))) + flow_p / flow_c * v_p
+        )
+    else:
+        # Расчет для крестовины
+        result = (
+            flow_o1 / flow_c * v_o1 * (math.cos(math.radians(angle_o1)))
+            + flow_o2 / flow_c * v_o2 * (math.cos(math.radians(angle_o2)))
+            + flow_p / flow_c * v_p
+        )
+    return result
+
+
+# Расчет тройника на разделение (функция от угла)
+def dzeta_diverge(alfa, v_current, v_c):
+    """
+    Рассчитывает КМС для одного "пути" в тройнике или крестовине при движении среды на РАЗДЕЛЕНИЕ.
+    По: Щекин, Кореневский «Справочник по теплоснабжению и вентиляции (изд. 4-е)», 1976,
+    стр. 97 (формула 51).
+
+    Возвращает коэффициент местного сопротивления.
+    """
+    if v_c * math.cos(math.radians(alfa)) > v_current:
+        result = (
+            math.sin(math.radians(alfa)) ** 2
+            + (math.cos(math.radians(alfa)) - v_current / v_c) ** 2
+        )
+        print("math.sin(math.radians(alfa)):", math.sin(math.radians(alfa)))
+        print("math.cos(math.radians(alfa)):", math.cos(math.radians(alfa)))
+        print("v_current / v_c:", v_current / v_c)
+
+        print("v:", v_current, "v_c:", v_c)
+    else:
+        result = (
+            math.sin(math.radians(alfa)) ** 2
+            + 0.5 * (1 - v_c * math.cos(math.radians(alfa)) / v_current) * (v_current / v_c) ** 2
+        )
+    return result
+
+
+def dzeta_converge(v_current, v_c, v_base):
+    """
+    Рассчитывает КМС для одного "пути" в тройнике или крестовине при движении среды на СМЕШЕНИЕ.
+    По: Щекин, Кореневский «Справочник по теплоснабжению и вентиляции (изд. 4-е)», 1976,
+    стр. 98 (формула 55).
+
+    Возвращает коэффициент местного сопротивления.
+    """
+
+    if v_base > v_c:
+        result = ((v_current / v_c) ** 2 - (v_base / v_c) ** 2) + (v_base / v_c - 1) ** 2
+    else:
+        result = ((v_current / v_c) ** 2 - (v_base / v_c) ** 2) + 0.5 * (1 - v_base / v_c)
+    return result
 
 
 def tee(
@@ -30,7 +102,6 @@ def tee(
     diameter_p=None,
     height_p=None,
     width_p=None,
-    roughness=0.001,
     thermophysics="idelchik",
 ):
     """
@@ -49,22 +120,23 @@ def tee(
     flowtype - одно из двух
         "converge" (смешение, вытяжная система)
         "diverge" (разделение, приточная система)
+    flow_x - расход воздуха, куб.м/ч
+    diameter_x - диаметр патрубка, м
     height_x - высота патрубка, м
     width_x - ширина патрубка, м
-    diameter_x - диаметр патрубка, м
-    v_x - расход воздуха, куб.м/ч
-    roughness - абсолютная шероховатость, м
     thermophysics - модель термофизических свойств (idelchik или thermo)
 
     Возвращает:
-    Потери давления на трение, Па
+    Словарь с потерями давления на трение, Па.
+    Ключи словаря:
+    'dP_o' - потери при движении среды «на отвод»,
+    'dP_p' - потери при движении среды «на проход».
     """
 
     print("================================")
     print(
         f"""Расчет тройника с параметрами:
-temperature: {temperature} °C, angle: {angle} м^3/ч, flowtype: {flowtype},
-roughness: {roughness} °C, thermophysics: {thermophysics},
+temperature: {temperature} °C, angle: {angle} м^3/ч, flowtype: {flowtype}, thermophysics: {thermophysics},
 flow_c: {flow_c} куб.м/ч, flow_o: {flow_o} куб.м/ч, flow_p: {flow_p} куб.м/ч,
 height_c: {height_c} м, width_c: {width_c} м, diameter_c: {diameter_c} м,
 height_o: {height_o} м, width_o: {width_o} м, diameter_o: {diameter_o} м,
@@ -74,9 +146,7 @@ height_p: {height_p} м, width_p: {width_p} м, diameter_p: {diameter_p} м"""
     ###########Проверки#############
     # Проверка, что задано два из трех расходов тройника
     assert (
-        (flow_c is not None and flow_o is not None and flow_p is None)
-        or (flow_c is None and flow_o is not None and flow_p is not None)
-        or (flow_c is not None and flow_o is None and flow_p is not None)
+        len(list(filter(None, [flow_c, flow_o, flow_p]))) == 2
     ), "Точно два из трех (flow_c, flow_o, flow_p) должны быть заданы."
 
     # Проверка, что задана либо оба из пары height/width, либо диаметр
@@ -132,41 +202,25 @@ height_p: {height_p} м, width_p: {width_p} м, diameter_p: {diameter_p} м"""
     # Расчет коэффициентов сопротивления
     if flowtype == "converge":
         # Расчет для тройника на смешение
-        # Расчет наивыгоднейшей скорости смешения
-        v_base_c = flow_o / flow_c * v_o * (math.cos(math.radians(angle))) + flow_p / flow_c * v_p
-        print(f"Рассчитана наивыг. скорость смешения v_base_c: {v_base_c:.3f}")
-        if v_base_c > v_c:
-            dzeta_o = math.sin(math.radians(angle)) ** 2
-            dzeta_p = ((v_o / v_c) ** 2 - (v_base_c / v_c) ** 2) + (v_base_c / v_c - 1) ** 2
-        else:
-            dzeta_o = ((v_o / v_c) ** 2 - (v_base_c / v_c) ** 2) + 0.5 * (1 - v_base_c / v_c)
-            dzeta_p = ((v_p / v_c) ** 2 - (v_base_c / v_c) ** 2) + 0.5 * (1 - v_base_c / v_c)
+        # Расчет наивыгоднейшей скорости смешения для конкретного патрубка (v_base)
+        v_base = velocity_best_mixture(
+            flow_o1=flow_o,
+            v_o1=v_o,
+            angle_o1=angle,
+            flow_o2=None,
+            v_o2=None,
+            angle_o2=None,
+            flow_p=flow_p,
+            v_p=v_p,
+            flow_c=flow_c,
+        )
+        print(f"Рассчитана наивыг. скорость смешения v_base: {v_base:.3f}")
+        dzeta_o = dzeta_converge(v_current=v_o, v_c=v_c, v_base=v_base)
+        dzeta_p = dzeta_converge(v_current=v_p, v_c=v_c, v_base=v_base)
     elif flowtype == "diverge":
-
-        # Расчет тройника на разделение (функция от угла)
-        def dzeta_diverge(alfa, v_current):
-            if v_c * math.cos(math.radians(alfa)) > v_o:
-                result = (
-                    math.sin(math.radians(alfa)) ** 2
-                    + (math.cos(math.radians(alfa)) - v_current / v_c) ** 2
-                )
-                print("math.sin(math.radians(alfa)):", math.sin(math.radians(alfa)))
-                print("math.cos(math.radians(alfa)):", math.cos(math.radians(alfa)))
-                print("v_current / v_c:", v_current / v_c)
-
-                print("v:", v_current, "v_c:", v_c)
-            else:
-                result = (
-                    math.sin(math.radians(alfa)) ** 2
-                    + 0.5
-                    * (1 - v_c * math.cos(math.radians(alfa)) / v_current)
-                    * (v_current / v_c) ** 2
-                )
-            return result
-
-        # Расчет для тройника на разделение при проходе угол = 0
-        dzeta_o = dzeta_diverge(alfa=angle, v_current=v_o)
-        dzeta_p = dzeta_diverge(alfa=0, v_current=v_p)
+        # Расчет для тройника на разделение. При проходе угол = 0
+        dzeta_o = dzeta_diverge(alfa=angle, v_current=v_o, v_c=v_c)
+        dzeta_p = dzeta_diverge(alfa=0, v_current=v_p, v_c=v_c)
 
     print(f"КМС тройника на отвод: {dzeta_o:.3f}")
     print(f"КМС тройника на проход: {dzeta_p:.3f}")

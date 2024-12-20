@@ -19,7 +19,6 @@ class TestTee(unittest.TestCase):
             diameter_c=0.160,
             diameter_o=0.160,
             diameter_p=0.160,
-            roughness=0.001,
             thermophysics="idelchik",
         )
         self.assertAlmostEqual(result["dP_p"], 11.11, places=1)
@@ -42,7 +41,6 @@ class TestTee(unittest.TestCase):
             diameter_c=0.160,
             diameter_o=0.160,
             diameter_p=0.160,
-            roughness=0.001,
             thermophysics="idelchik",
         )
         self.assertAlmostEqual(result["dP_p"], 52.42, places=1)
@@ -62,7 +60,6 @@ class TestTee(unittest.TestCase):
             diameter_c=0.160,
             diameter_o=0.160,
             diameter_p=0.160,
-            roughness=0.001,
             thermophysics="idelchik",
         )
         self.assertAlmostEqual(result["dP_p"], 52.42, places=1)
@@ -84,7 +81,6 @@ class TestTee(unittest.TestCase):
             width_p=0.3,
             height_o=0.3,
             width_o=0.3,
-            roughness=0.001,
             thermophysics="idelchik",
         )
         self.assertAlmostEqual(result["dP_o"], 30.52, places=1)
@@ -107,7 +103,6 @@ class TestTee(unittest.TestCase):
             width_p=0.3,
             height_o=0.3,
             width_o=0.3,
-            roughness=0.001,
             thermophysics="idelchik",
         )
         # Нижний результат сходится с тестом в Вентиляции, а с расчетом в Excel не сходится
@@ -130,7 +125,6 @@ class TestTee(unittest.TestCase):
                 width_p=0.3,
                 height_o=0.3,
                 width_o=0.3,
-                roughness=0.001,
                 thermophysics="idelchik",
             )
 
@@ -146,7 +140,6 @@ class TestTee(unittest.TestCase):
                 width_p=0.3,
                 height_o=0.3,
                 width_o=0.3,
-                roughness=0.001,
                 thermophysics="idelchik",
             )
 

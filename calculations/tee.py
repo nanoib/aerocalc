@@ -57,11 +57,6 @@ def dzeta_diverge(alfa, v_current, v_c):
             math.sin(math.radians(alfa)) ** 2
             + (math.cos(math.radians(alfa)) - v_current / v_c) ** 2
         )
-        print("math.sin(math.radians(alfa)):", math.sin(math.radians(alfa)))
-        print("math.cos(math.radians(alfa)):", math.cos(math.radians(alfa)))
-        print("v_current / v_c:", v_current / v_c)
-
-        print("v:", v_current, "v_c:", v_c)
     else:
         result = (
             math.sin(math.radians(alfa)) ** 2
@@ -78,7 +73,6 @@ def dzeta_converge(v_current, v_c, v_base):
 
     Возвращает коэффициент местного сопротивления.
     """
-
     if v_base > v_c:
         result = ((v_current / v_c) ** 2 - (v_base / v_c) ** 2) + (v_base / v_c - 1) ** 2
     else:

@@ -49,14 +49,14 @@ def cross(
 
     Аргументы:
     temperature - температура воздуха, °C
-    angle - угол между ответвлением и проходом, °
     flowtype - вариант движения среды, одно из двух
         "converge" (смешение, вытяжная система)
         "diverge" (разделение, приточная система)
     flow_x - расход воздуха, куб.м/ч
+    diameter_x - диаметр патрубка, м
     height_x - высота патрубка, м
     width_x - ширина патрубка, м
-    diameter_x - диаметр патрубка, м
+    angle_x - угол между ответвлением и проходом, °
     thermophysics - модель термофизических свойств (idelchik или thermo)
 
     Возвращает:
@@ -68,7 +68,7 @@ def cross(
 
     print("================================")
     print(
-        f"""Расчет тройника/крестовины с параметрами:
+        f"""Расчет крестовины с параметрами:
 temperature: {temperature} °C, flowtype: {flowtype},
 roughness: {roughness} °C, thermophysics: {thermophysics},
 flow_c: {flow_c} куб.м/ч, flow_o: {flow_o1} куб.м/ч, flow_o: {flow_o2} куб.м/ч, flow_p: {flow_p} куб.м/ч,
@@ -100,8 +100,8 @@ height_p: {height_p} м, width_p: {width_p} м, diameter_p: {diameter_p} м"""
 
     # Проверка для каждой тройки параметров
     validate_geometry(height_c, width_c, diameter_c, "c")
-    validate_geometry(height_o1, width_o1, diameter_o1, "o")
-    validate_geometry(height_o2, width_o2, diameter_o2, "o")
+    validate_geometry(height_o1, width_o1, diameter_o1, "o1")
+    validate_geometry(height_o2, width_o2, diameter_o2, "o2")
     validate_geometry(height_p, width_p, diameter_p, "p")
 
     # Проверка, что flowtype имеет одно из двух допустимых значений
@@ -109,6 +109,9 @@ height_p: {height_p} м, width_p: {width_p} м, diameter_p: {diameter_p} м"""
         "converge",
         "diverge",
     ], "flowtype должен быть одним из двух допустимых значений: converge или diverge."
+
+    # Проверка, что заданы углы патрубков
+    assert angle_o1 and angle_o2, "Нужно задавать углы"
     ###########Проверки#############
 
     # Получаем термофизические данные
@@ -129,7 +132,7 @@ height_p: {height_p} м, width_p: {width_p} м, diameter_p: {diameter_p} м"""
         flow_o2 = flow_c - flow_o1 - flow_p
         print(f"Рассчитано flow_o1: {flow_o2:.0f} куб.м/ч")
     elif flow_p is None:
-        flow_p = flow_c - flow_o1 - flow_o2 - flow_p
+        flow_p = flow_c - flow_o1 - flow_o2
         print(f"Рассчитано flow_p: {flow_p:.0f} куб.м/ч")
 
     assert flow_c == flow_o1 + flow_o2 + flow_p, "Расходы заданы не верно"
@@ -160,9 +163,9 @@ height_p: {height_p} м, width_p: {width_p} м, diameter_p: {diameter_p} м"""
             flow_c=flow_c,
         )
         print(f"Рассчитана наивыг. скорость смешения v_base: {v_base:.3f}")
-        dzeta_o1 = dzeta_converge(v_current=v_o1, v_c=v_c)
-        dzeta_o2 = dzeta_converge(v_current=v_o2, v_c=v_c)
-        dzeta_p = dzeta_converge(v_current=v_p, v_c=v_c)
+        dzeta_o1 = dzeta_converge(v_current=v_o1, v_c=v_c, v_base=v_base)
+        dzeta_o2 = dzeta_converge(v_current=v_o2, v_c=v_c, v_base=v_base)
+        dzeta_p = dzeta_converge(v_current=v_p, v_c=v_c, v_base=v_base)
     elif flowtype == "diverge":
         # Расчет для тройника на разделение. При проходе угол = 0
         dzeta_o1 = dzeta_diverge(alfa=angle_o1, v_current=v_o1, v_c=v_c)
@@ -176,17 +179,15 @@ height_p: {height_p} м, width_p: {width_p} м, diameter_p: {diameter_p} м"""
     # Расчет динамического давления по скорости v_c
     p_dyn = dynamic_pressure(density(temperature), v_c)
 
-    # Расчет потерь давления "на отвод", патрубок 1
+    # Расчет потерь давления "на отвод" (патрубок 1, патрубок 2), и "на проход"
     dP_o1 = p_dyn * dzeta_o1
-    # Расчет потерь давления "на отвод", патрубок 2
     dP_o2 = p_dyn * dzeta_o2
-    # Расчет потерь давления "на проход"
     dP_p = p_dyn * dzeta_p
 
     result = {
         "dP_p": dP_p,
         "dP_o1": dP_o1,
-        "dP_o1": dP_o2,
+        "dP_o2": dP_o2,
     }
 
     print(f"Полные dP крестовины, на отвод 1: {result['dP_o1']:.3f} Па")

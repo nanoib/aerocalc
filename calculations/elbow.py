@@ -103,20 +103,20 @@ def elbow(
     # Рассчитываем коэффициент гидравлического сопротивления трения
     lmbd = friction_factor(re, d_hyd, roughness)
 
+    # TODO вероятно в программе не учитываются разница ориентации отвода (т.е. фактические a0, b0)
+    r0b0 = r0 / diameter if diameter else (r0 / width if oriented == "horiz" else r0 / height)
+    a0b0 = None if diameter else (height / width if oriented == "horiz" else width / height)
+
     # TODO в программе не учитывается k_delta и k_re
     if calcversion == "22":
         print("Расчет по версии 22 без k_delta и k_re")
         k_delta = 1
         k_re = 1
     elif calcversion is None:
-        k_delta = 1 if re < 40000 else 2
+        k_delta = 1 if re < 40000 else (1.5 if r0b0 <= 0.55 else 2)
         k_re = 1.3 - 0.29 * math.log(re * 10**-5)
     else:
         raise ValueError("Неизвестная версия расчета")
-
-    # TODO вероятно в программе не учитываются разница ориентации отвода (т.е. фактические a0, b0)
-    r0b0 = r0 / diameter if diameter else (r0 / width if oriented == "horiz" else r0 / height)
-    a0b0 = None if diameter else (height / width if oriented == "horiz" else width / height)
 
     A1 = (
         0.9 * math.sin(math.radians(angle))

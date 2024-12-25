@@ -83,7 +83,7 @@ class Testtransition(unittest.TestCase):
             length=0.078,
             roughness=0.0015,
             thermophysics="idelchik",
-            # calcversion="22",
+            calcversion="22",
         )
         self.assertAlmostEqual(result, 0.4, places=1)
 

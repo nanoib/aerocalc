@@ -48,7 +48,7 @@ def transition(
     length - длина перехода, м
     roughness - абсолютная шероховатость, м
     thermophysics - модель термофизических свойств (idelchik или thermo)
-    calcversion - версия расчета. "22" - расчет по большему сечению
+    calcversion - версия расчета. "22" - расчет по версии 22
 
     Возвращает:
     Потери давления на трение, Па
@@ -103,7 +103,7 @@ def transition(
                 # Если текущая дельта больше предыдущей, она становится максимальной
                 if delta_current > delta:
                     delta = delta_current
-    print(f"Дельта между сечениями перехода: {delta:.1f}")
+    print(f"Дельта между сечениями перехода: {delta:.3f}")
 
     # Непосредственно расчет полуугла перехода
     alfa05 = math.atan(delta / 2 / length)
@@ -115,11 +115,27 @@ def transition(
 
     s1 = square(height1, width1, diameter1)
     s2 = square(height2, width2, diameter2)
-    # Непосредственно степенm расширения перехода
-    np1 = s1 / s2 if s1 > s2 else s2 / s1
+    # Непосредственно степень расширения перехода
+    np = s1 / s2 if s1 > s2 else s2 / s1
 
-    # Коэффициент сопротивления расширения перехода (формула 5-5)
-    dzeta_transition = 3.2 * (math.tan(alfa05) ** 1.25) * (1 - 1 / np1) ** 2
+    # Местный коэффициент сопротивления перехода
+    if s2 >= s1:
+        # Если расширение
+        dzeta_transition = 3.2 * (math.tan(alfa05) ** 1.25) * (1 - 1 / np) ** 2
+    else:
+        # Если сужение
+        if calcversion == "22":
+            print("Расчет по версии 22 без местных потерь на сужении")
+            dzeta_transition = 0
+        elif calcversion is None:
+            # Формула 5-136
+            # TODO этот коэффициент в программе равен нулю. Не должен
+            alpha = alfa05 * 2
+            dzeta_transition = (
+                -0.0125 * np**4 + 0.0224 * np**3 - 0.00723 * np**2 + 0.00444 * np - 0.00745
+            ) * (alpha**3 + 2 * math.pi * alpha**2 - 10 * alpha)
+        else:
+            raise ValueError("Неизвестная версия расчета")
     print(f"Коэффициент сопротивления расширения перехода: {dzeta_transition:.4f}")
 
     # 2. Рассчитывыем коэффициент сопротивления трения
@@ -141,13 +157,13 @@ def transition(
     # Выбираем наименьший гидравлический диаметр как определяющий (для расчета re и lmbd)
     d_hyd_base = min(d_hyd1, d_hyd2)
 
-    # Рассчитываем определяющую (максимальную) скорость воздуха по минимальному сечению
-    # TODO в программе скорость
+    # Рассчитываем определяющую (максимальную) скорость воздуха по входном сечению
+    # Если сужение
     if calcversion == "22":
-        print("Расчет по версии 22 по большему сечению")
-        v_base = flow / 3600 / max(s2, s1)
+        print("Расчет скорости по версии 22, по большему сечению")
+        v_base = flow / 3600 / s2
     elif calcversion is None:
-        v_base = flow / 3600 / min(s2, s1)
+        v_base = flow / 3600 / s1
     else:
         raise ValueError("Неизвестная версия расчета")
 
@@ -158,23 +174,18 @@ def transition(
     lmbd = friction_factor(re, d_hyd_base, roughness)
 
     # Рассчитываем коэффициент сопротивления трения перехода (формула 5-6)
-    dzeta_friction = lmbd / (8 * math.sin(alfa05)) * (1 - 1 / np1**2)
+    dzeta_friction = lmbd / (8 * math.sin(alfa05)) * (1 - 1 / np**2)
     print(f"Коэффициент сопротивления трения перехода: {dzeta_friction:.4f}")
 
     # 3. Рассчитываем общий коэффициент гидравлического сопротивления расширения и потери
-    if s2 < s1:
-        # Имеем сужение, учитываем только коэффициент сопротивления трения
-        dzeta = dzeta_friction
-    else:
-        dzeta = dzeta_transition + dzeta_friction
+    dzeta = dzeta_friction + dzeta_transition
 
-    # TODO: Кажется, в 24.1 расчеты ведутся не по максимальной скорости, а должны
     # Рассчитываем динамическое давление по определяющей скорости
     p_dyn = dynamic_pressure(density(temperature), v_base)
 
     print(
         f"Расчетные параметры:\nv_base: {v_base:.2f}, s1: {s1:.5f}, s2: {s2:.5f}, \
-np1: {np1:.2f}, d_hyd_base: {d_hyd_base:.3f}, alfa05: {alfa05:.3f} рад/{math.degrees(alfa05):.3f}°"
+np1: {np:.2f}, d_hyd_base: {d_hyd_base:.3f}, alfa05: {alfa05:.3f} рад/{math.degrees(alfa05):.3f}°"
     )
 
     result = dzeta * p_dyn

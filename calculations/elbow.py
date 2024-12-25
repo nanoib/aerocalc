@@ -101,6 +101,7 @@ def elbow(
     re = reynolds_number(v, d_hyd, kinematic_viscosity(temperature))
 
     # Рассчитываем коэффициент гидравлического сопротивления трения
+    # TODO нужно иметь отдельное свойство для шероховатости каждого фитинга
     lmbd = friction_factor(re, d_hyd, roughness)
 
     # TODO вероятно в программе не учитываются разница ориентации отвода (т.е. фактические a0, b0)
